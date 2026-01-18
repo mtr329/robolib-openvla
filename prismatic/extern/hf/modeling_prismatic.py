@@ -515,8 +515,8 @@ class OpenVLAForActionPrediction(PrismaticForConditionalGeneration):
             )
 
         # Run VLA inference
-        generated_ids = self.generate(input_ids, max_new_tokens=self.get_action_dim(unnorm_key), **kwargs)
-
+        generated_outputs = self.generate(input_ids, max_new_tokens=self.get_action_dim(unnorm_key), **kwargs)
+        generated_ids = generated_outputs['sequences']
         # Extract predicted action tokens and translate into (normalized) continuous actions
         predicted_action_token_ids = generated_ids[0, -self.get_action_dim(unnorm_key) :].cpu().numpy()
         discretized_actions = self.vocab_size - predicted_action_token_ids

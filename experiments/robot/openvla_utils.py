@@ -40,7 +40,7 @@ def get_vla(cfg):
     AutoProcessor.register(OpenVLAConfig, PrismaticProcessor)
     AutoModelForVision2Seq.register(OpenVLAConfig, OpenVLAForActionPrediction)
 
-    vla = AutoModelForVision2Seq.from_pretrained(
+    vla = OpenVLAForActionPrediction.from_pretrained(
         cfg.pretrained_checkpoint,
         attn_implementation="flash_attention_2",
         torch_dtype=torch.bfloat16,
@@ -49,6 +49,15 @@ def get_vla(cfg):
         low_cpu_mem_usage=True,
         trust_remote_code=True,
     )
+    # vla = AutoModelForVision2Seq.from_pretrained(
+    #     cfg.pretrained_checkpoint,
+    #     attn_implementation="flash_attention_2",
+    #     torch_dtype=torch.bfloat16,
+    #     load_in_8bit=cfg.load_in_8bit,
+    #     load_in_4bit=cfg.load_in_4bit,
+    #     low_cpu_mem_usage=True,
+    #     trust_remote_code=True,
+    # )
 
     # Move model to device.
     # Note: `.to()` is not supported for 8-bit or 4-bit bitsandbytes models, but the model will
@@ -165,6 +174,12 @@ def get_vla_action(vla, processor, base_vla_name, obs, task_label, unnorm_key, c
     # Process inputs.
     inputs = processor(prompt, image).to(DEVICE, dtype=torch.bfloat16)
 
+    kwargs = {}
+    kwargs['return_dict_in_generate'] = True
+    kwargs['output_logits'] = True
+    kwargs['output_attentions']  = True
+    kwargs['output_hidden_states'] = True
+
     # Get action.
-    action = vla.predict_action(**inputs, unnorm_key=unnorm_key, do_sample=False)
+    action = vla.predict_action(**inputs, unnorm_key=unnorm_key, do_sample=False,  **kwargs)
     return action
